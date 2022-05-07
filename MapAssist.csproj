@@ -7,7 +7,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
     <ProjectGuid>{FB3AC437-B7BB-42FF-A2A2-F10551F95F6C}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>MapAssist</RootNamespace>
     <CustomAssemblyName />
     <AssemblyName Condition=" '$(CustomAssemblyName)' != '' ">$(CustomAssemblyName)</AssemblyName>
@@ -89,6 +89,9 @@
   <PropertyGroup>
     <NoWin32Manifest>true</NoWin32Manifest>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -142,14 +145,15 @@
     <Compile Include="Helpers\MapApi.cs" />
     <Compile Include="Helpers\Compositor.cs" />
     <Compile Include="Helpers\WindowsExternal.cs" />
+    <Compile Include="FollowMe.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Settings\LootLogConfiguration.cs" />
+    <Compile Include="Settings\MapAssistFollowConfiguration.cs" />
     <Compile Include="Settings\MapAssistConfiguration.cs" />
-    <Compile Include="Structs\MapSeed.cs" />
     <Compile Include="Structs\Act.cs" />
     <Compile Include="Structs\ActMisc.cs" />
     <Compile Include="Structs\Inventory.cs" />
@@ -168,12 +172,12 @@
     <Compile Include="Structs\UnitAny.cs" />
     <Compile Include="Structs\UnitHashTable.cs" />
     <Compile Include="Types\Chest.cs" />
+    <Compile Include="Types\InputSender.cs" />
     <Compile Include="Types\ItemsExport.cs" />
     <Compile Include="Types\Locale.cs" />
     <Compile Include="Types\Items.cs" />
     <Compile Include="Types\Missile.cs" />
     <Compile Include="Types\Roster.cs" />
-    <Compile Include="Types\MapSeed.cs" />
     <Compile Include="Types\Session.cs" />
     <Compile Include="Types\Shrine.cs" />
     <Compile Include="Types\Skill.cs" />
@@ -235,7 +239,7 @@
       <Version>13.0.1</Version>
     </PackageReference>
     <PackageReference Include="NLog">
-      <Version>4.7.12</Version>
+      <Version>4.7.15</Version>
     </PackageReference>
     <PackageReference Include="YamlDotNet">
       <Version>11.2.1</Version>
@@ -247,7 +251,6 @@
     <None Include="ItemFilter.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Config.yaml" />
     <None Include="Resources\Ching.wav" />
   </ItemGroup>
   <ItemGroup>

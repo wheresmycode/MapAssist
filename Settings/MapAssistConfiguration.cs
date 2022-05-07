@@ -44,6 +44,9 @@ namespace MapAssist.Settings
             new ConfigurationParser<MapAssistConfiguration>().SerializeToFile(this);
         }
 
+        [YamlMember(Alias = "FollowConfiguration", ApplyNamingConventions = false)] //FollowMe
+        public FollowConfiguration FollowConfiguration { get; set; }
+
         [YamlMember(Alias = "HotkeyConfiguration", ApplyNamingConventions = false)]
         public HotkeyConfiguration HotkeyConfiguration { get; set; }
 
@@ -52,7 +55,7 @@ namespace MapAssist.Settings
 
         [YamlMember(Alias = "AuthorizedWindowTitles", ApplyNamingConventions = false)]
         public string[] AuthorizedWindowTitles { get; set; } = new string[] { };
-        
+
         [YamlMember(Alias = "RenderingConfiguration", ApplyNamingConventions = false)]
         public RenderingConfiguration RenderingConfiguration { get; set; }
 

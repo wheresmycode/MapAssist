@@ -1,25 +1,44 @@
 ﻿using MapAssist.Helpers;
 using MapAssist.Structs;
+using MapAssist.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+
 namespace MapAssist.Types
 {
     public class UnitPlayer : UnitAny
     {
+        private static readonly NLog.Logger _log = NLog.LogManager.GetCurrentClassLogger();
+
         public string Name { get; private set; }
         public Act Act { get; private set; }
         public Skills Skills { get; private set; }
         public List<State> StateList { get; private set; }
         public bool InParty { get; private set; }
+        public bool IsLeader { get; private set; }
         public bool IsHostile { get; private set; }
         public RosterEntry RosterEntry { get; private set; }
+        
 
         public UnitPlayer(IntPtr ptrUnit) : base(ptrUnit)
         {
         }
+
+        private bool CheckIfLeader()
+        {
+            if (Name == MapAssistConfiguration.Loaded.FollowConfiguration.Leader)
+            {
+                //_log.Info("Found Leader "+Name);
+                //Console.WriteLine(Name + " is the leader");
+                return true;
+            }
+            //Console.WriteLine(Name + " is not leader");
+            return false;
+        }
+
 
         public new UnitPlayer Update()
         {
@@ -32,6 +51,8 @@ namespace MapAssist.Types
                     //Inventory = processContext.Read<Inventory>(Struct.ptrInventory);
                     Skills = new Skills(Struct.pSkills);
                     StateList = GetStateList();
+                    IsLeader = CheckIfLeader();
+
                 }
 
                 return this;

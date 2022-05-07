@@ -1,0 +1,3 @@
+bugs:
+key conversion in clickKey doesnt work corretly (uppercase -> lowercase -> wrong?)
+barb merc gets recognized as monster?

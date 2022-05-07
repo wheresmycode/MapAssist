@@ -34,16 +34,20 @@ namespace MapAssist
     {
         private static readonly string githubSha = "GITHUB_SHA";
         private static readonly string githubRunNumber = "GITHUB_RUN_NUMBER";
-        private static readonly string appName = "MapAssist";
+        private static readonly string appName = "FollowMe";
         private static string messageBoxTitle = $"{appName} v1.0.0";
         private static Mutex mutex = null;
 
         private static ConfigEditor configEditor;
         private static NotifyIcon trayIcon;
         private static Overlay overlay;
-        private static BackgroundWorker backWorkOverlay = new BackgroundWorker();
+        private static FollowMe follower;
+        //private static BackgroundWorker backWorkOverlay = new BackgroundWorker();
+        private static BackgroundWorker backWorkFollow = new BackgroundWorker();
+        //private static BackgroundWorker backWorkLog = new BackgroundWorker();
         private static IKeyboardMouseEvents globalHook = Hook.GlobalEvents();
         private static readonly Logger _log = LogManager.GetCurrentClassLogger();
+
 
         /// <summary>
         /// The main entry point for the application.
@@ -53,6 +57,7 @@ namespace MapAssist
         {
             try
             {
+
                 if (githubSha.Length == 40)
                 {
                     messageBoxTitle += $".{githubRunNumber}";
@@ -90,6 +95,7 @@ namespace MapAssist
                     Application.EnableVisualStyles();
                     Application.SetCompatibleTextRenderingDefault(false);
 
+
                     try
                     {
                         if (!MapApi.StartPipedChild())
@@ -116,6 +122,20 @@ namespace MapAssist
                     var exitMenuItem = new ToolStripMenuItem("Exit", null, TrayExit);
                     contextMenu.Items.Add(exitMenuItem);
 
+                    _log.Info("This is test log message");
+
+                    /*
+                    DebugLog();
+                    _DebugLog.Visible = true;
+                    _DebugLog.Show();
+                    for (var ib = 30; ib < 30; ib++) 
+                    { 
+                        _DebugLog.AddToLog("Some event to log.");
+                        _DebugLog.updateLog();
+                    }
+                    _DebugLog.updateLog();
+                    */
+
                     contextMenu.Items.AddRange(new ToolStripItem[] {
                         configMenuItem,
                         lootFilterMenuItem,
@@ -140,9 +160,14 @@ namespace MapAssist
                         }
                     };
 
-                    backWorkOverlay.DoWork += new DoWorkEventHandler(RunOverlay);
-                    backWorkOverlay.WorkerSupportsCancellation = true;
-                    backWorkOverlay.RunWorkerAsync();
+                    //backWorkOverlay.DoWork += new DoWorkEventHandler(RunOverlay);
+                    //backWorkOverlay.WorkerSupportsCancellation = true;
+                    //backWorkOverlay.RunWorkerAsync();
+
+                    backWorkFollow.DoWork += new DoWorkEventHandler(RunFollowMe);
+                    backWorkFollow.WorkerSupportsCancellation = true;
+                    backWorkFollow.RunWorkerAsync();
+
 
                     GameManager.OnGameAccessDenied += (_, __) =>
                     {
@@ -154,6 +179,8 @@ namespace MapAssist
                     };
 
                     GameManager.MonitorForegroundWindow();
+
+
 
                     Application.Run();
                 }
@@ -171,6 +198,15 @@ namespace MapAssist
                 overlay.Run();
             }
         }
+        public static void RunFollowMe(object sender, DoWorkEventArgs e) //FollowMe
+        {
+            using (follower = new FollowMe())
+            {
+                follower.Run();
+            }
+        }
+
+
 
         private static void ProcessException(Exception e)
         {
@@ -306,14 +342,20 @@ namespace MapAssist
             _log.Info("Disposing");
 
             overlay.Dispose();
+            follower.Dispose();
             GameManager.Dispose();
             MapApi.Dispose();
             globalHook.Dispose();
             trayIcon.Dispose();
-
+            /*
             if (backWorkOverlay.IsBusy)
             {
                 backWorkOverlay.CancelAsync();
+            }
+            */
+            if (backWorkFollow.IsBusy)
+            {
+                backWorkFollow.CancelAsync();
             }
 
             mutex.Dispose();

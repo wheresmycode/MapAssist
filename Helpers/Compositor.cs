@@ -45,7 +45,7 @@ namespace MapAssist.Helpers
         private FormalFont _formalFont;
 
         private Matrix3x2 mapTransformMatrix;
-        private Matrix3x2 areaTransformMatrix;
+        public Matrix3x2 areaTransformMatrix;
         private HashSet<(Bitmap, Point)> gamemaps = new HashSet<(Bitmap, Point)>();
         private (Color?, Color?) gamemapColors = (Color.Empty, Color.Empty);
         private Rectangle _drawBounds;
@@ -54,6 +54,15 @@ namespace MapAssist.Helpers
         private float scaleHeight = 1;
         private const int WALKABLE = 0;
         private const int BORDER = 1;
+
+ 
+        public List<UnitMonster> MonsterList = new List<UnitMonster>();
+        public Point[] enemyPos;
+        //private Point lastleaderPos;
+        public UnitPlayer Leader;
+        public int leaderDistance = -1;
+        public Point leaderOsdPos = new Point (0,0);
+        public int[] potsInBelt = new int[4]; //health=0,mana=1,rejuv=2,else=3
 
         public Compositor()
         {
@@ -98,6 +107,7 @@ namespace MapAssist.Helpers
             }
 
             CalcTransformMatrices(gfx);
+            //_log.Info("CalcTransformMatrices");
 
             var maybeWalkableColor = MapAssistConfiguration.Loaded.MapColorConfiguration.Walkable;
             var maybeBorderColor = MapAssistConfiguration.Loaded.MapColorConfiguration.Border;
@@ -162,6 +172,7 @@ namespace MapAssist.Helpers
 
                 gamemap.CopyFromMemory(bytes, imageSize.Width * 4);
                 var origin = renderArea.Origin.Add(renderArea.ViewInputRect.Left - _areaData.ViewInputRect.Left, renderArea.ViewInputRect.Top - _areaData.ViewInputRect.Top);
+                _log.Info(renderArea.Area.Name() + " Origin:" + origin);
 
                 gamemaps.Add((gamemap, origin));
             }
@@ -184,6 +195,7 @@ namespace MapAssist.Helpers
             foreach (var (gamemap, origin) in gamemaps)
             {
                 DrawBitmap(gfx, gamemap, origin.Subtract(_areaData.Origin).Subtract(_areaData.MapPadding, _areaData.MapPadding), (float)MapAssistConfiguration.Loaded.RenderingConfiguration.Opacity);
+                //_log.Info("MapPadding:" + _areaData.MapPadding);
             }
 
             renderTarget.PopAxisAlignedClip();
@@ -195,6 +207,8 @@ namespace MapAssist.Helpers
 
             renderTarget.Transform = Matrix3x2.Identity.ToDXMatrix(); // Needed for the draw bounds to work properly
             renderTarget.PushAxisAlignedClip(_drawBounds, AntialiasMode.Aliased);
+
+
 
             renderTarget.Transform = areaTransformMatrix.ToDXMatrix();
 
@@ -375,6 +389,7 @@ namespace MapAssist.Helpers
 
         private void DrawMonsters(Graphics gfx)
         {
+            MonsterList.Clear();
             var drawMonsterIcons = new List<(IconRendering, UnitMonster)>();
             var drawMonsterLabels = new List<(PointOfInterestRendering, Point, string, Color?)>();
 
@@ -383,7 +398,7 @@ namespace MapAssist.Helpers
             foreach (var monster in _gameData.Monsters)
             {
                 var mobRender = GetMonsterIconRendering(monster);
-
+                
                 if (NpcExtensions.IsTownsfolk(monster.Npc))
                 {
                     var npcRender = MapAssistConfiguration.Loaded.MapConfiguration.Npc;
@@ -399,6 +414,7 @@ namespace MapAssist.Helpers
                 else if (mobRender.CanDrawIcon())
                 {
                     drawMonsterIcons.Add((mobRender, monster));
+                    MonsterList.Add(monster);
                 }
             }
 
@@ -420,7 +436,7 @@ namespace MapAssist.Helpers
                     if (mobRender == rendering)
                     {
                         var monsterPosition = monster.Position;
-
+                        
                         DrawIcon(gfx, rendering, monsterPosition);
 
                         // Draw Monster Immunities on top of monster icon
@@ -566,6 +582,9 @@ namespace MapAssist.Helpers
 
             if (_gameData.Roster.EntriesByUnitId.TryGetValue(_gameData.PlayerUnit.UnitId, out var myPlayerEntry))
             {
+                leaderDistance = -1;
+                var foundleader = false;
+
                 foreach (var player in _gameData.Roster.List)
                 {
                     var myPlayer = player.UnitId == myPlayerEntry.UnitId;
@@ -577,8 +596,48 @@ namespace MapAssist.Helpers
 
                     if (_gameData.Players.TryGetValue(player.UnitId, out var playerUnit))
                     {
+                        if (playerUnit.IsLeader && !myPlayer && foundleader == false)
+                        {
+                            foundleader = true;
+                            /*
+                            if (playerUnit.Act.ActId != _gameData.PlayerUnit.Act.ActId)
+                            {
+                                Leader = null;
+                                _log.Info(playerName + " is not in the same act!");
+                                // Leader is not in the same act, should be impossible in roster
+                            }*/
+                            if (playerUnit.Area != _gameData.PlayerUnit.Area)
+                            {
+                                var myMapPos = _gameData.PlayerUnit.Position.ToVector();
+                                leaderDistance = (int)Vector2.Distance(playerUnit.Position.ToVector(), myMapPos);
+                                leaderOsdPos = ConvertMapPosToOsdPos(playerUnit.Position);
+                                Leader = null;
+                                _log.Info(playerName + " is in " + playerUnit.Area.Name() + " Distance: " + leaderDistance);
+                                // Leader is not in the same area
+                                continue;
+                            }
+                            /*
+                            if (playerUnit.IsCorpse)
+                            {
+                                Leader = null;
+                                _log.Info(playerName + " is corpse!");
+                                // Leader is a corpse, should be impossible in roster
+                            }*/
+                            
+                            //Console.WriteLine(playerUnit.Name + " was set as leader unit");
+                            Leader = playerUnit;
+
+                        }
+                        else if(foundleader == false)
+                        {
+                            //Console.WriteLine("Leader is not in roster!");
+                            Leader = null;
+                        }
+                        
+                        //Console.WriteLine(playerUnit.Name);
                         if (!myPlayer && playerUnit.Act.ActId != _gameData.PlayerUnit.Act.ActId) continue; // Don't show player if not in the same act
                         if (!myPlayer && !areasToRender.Any(area => area.IncludesPoint(playerUnit.Position))) continue; // Don't show player if not in drawn areas
+
 
                         // use data from the unit table if available
                         if (playerUnit.InParty)
@@ -602,7 +661,16 @@ namespace MapAssist.Helpers
 
                             if (canDrawThisLabel && !myPlayer)
                             {
-                                drawPlayerLabels.Add((rendering, playerUnit.Position, playerName, rendering.LabelColor));
+                                if (playerUnit.IsLeader)
+                                {
+                                    drawPlayerLabels.Add((rendering, playerUnit.Position, "Leader: " + playerName, rendering.LabelColor));
+                                    //leaderPos = playerUnit.Position; //canDrawThisLabel range seems limited?
+                                }
+                                else
+                                {
+                                    drawPlayerLabels.Add((rendering, playerUnit.Position, playerName, rendering.LabelColor));
+                                }
+                                ;
                             }
                         }
                         else
@@ -630,6 +698,7 @@ namespace MapAssist.Helpers
                             if (rendering.CanDrawLabel() && !myPlayer)
                             {
                                 drawPlayerLabels.Add((rendering, playerUnit.Position, playerName, rendering.LabelColor));
+                                
                             }
                         }
                     }
@@ -674,6 +743,7 @@ namespace MapAssist.Helpers
                 {
                     if (renderOrder == rendering)
                     {
+                        
                         DrawIcon(gfx, rendering, position);
                     }
                 }
@@ -1141,10 +1211,16 @@ namespace MapAssist.Helpers
                 for (var i = 0; i < 4; i++)
                 {
                     var items = _gameData.PlayerUnit.BeltItems[i].Where(x => x != null).ToArray();
-
                     var itemTypes = items.Select(x => x.Item.IsHealthPotion() ? 0 : x.Item.IsManaPotion() ? 1 : x.Item.IsRejuvPotion() ? 2 : 3).ToArray();
-                    var color = itemTypes.Distinct().Count() == 1 && itemTypes[0] < colors.Length ? colors[itemTypes[0]] : Color.White;
-                    var showAsterisk = items.Count(x => x.Item == items[0].Item) < items.Length;
+
+                    if (itemTypes != null && itemTypes.Length > 0)
+                    {   
+                        potsInBelt[i] = itemTypes[0];
+                    }else potsInBelt[i] = 3;
+
+
+                    var color = itemTypes.Distinct().Count() == 1 && itemTypes[0] < colors.Length ? colors[itemTypes[0]] : Color.White; //white for everything thats not health/mana/rejuv
+                    var showAsterisk = items.Count(x => x.Item == items[0].Item) < items.Length; //if pots are not the same
 
                     var position = new Point(
                         0.5f * gfx.Width + 0.16f * gfx.Height + 8.00f + 0.0575f * gfx.Height * i,
@@ -1160,6 +1236,7 @@ namespace MapAssist.Helpers
                         DrawText(gfx, position, "*", fontFamily, font.FontSize, color, true, TextAlign.Right);
                     }
                 }
+                //_log.Info("Pots: " + potsInBelt[0]+potsInBelt[1]+potsInBelt[2]+potsInBelt[3]);
             }
         }
 
@@ -1185,9 +1262,28 @@ namespace MapAssist.Helpers
             var renderTarget = gfx.GetRenderTarget();
             var currentTransform = renderTarget.Transform;
             renderTarget.Transform = Matrix3x2.Identity.ToDXMatrix();
+            /*
+            if (position == leaderPos)
+            {
+                if (lastleaderPos != leaderPos)
+                {
+                    //_log.Info("Leader Position before: " + position);
+                    leaderWindowPos = Vector2.Transform(position.ToVector(), currentTransform.ToMatrix()).ToPoint();
+                    _log.Info("Leader Position: " + leaderWindowPos);
+                    
+                    if (currentTransform.ToMatrix() == areaTransformMatrix)
+                    {
+                        _log.Info("currentTransform == areaTransformMatrix");
+                    }
+                    
+                    lastleaderPos = leaderPos;
+                }
 
+            };
+            */
             position = Vector2.Transform(position.ToVector(), currentTransform.ToMatrix()).ToPoint();
-
+            
+            
             var fill = !rendering.IconShape.ToString().ToLower().EndsWith("outline");
             var fillBrush = CreateSolidBrush(gfx, rendering.IconColor);
             var outlineBrush = CreateSolidBrush(gfx, rendering.IconOutlineColor);
@@ -1538,7 +1634,7 @@ namespace MapAssist.Helpers
 
                 if (MapAssistConfiguration.Loaded.RenderingConfiguration.Position == MapPosition.Center)
                 {
-                    mapTransformMatrix *= Matrix3x2.CreateTranslation(new Vector2(gfx.Width / 2, gfx.Height / 2))
+                    mapTransformMatrix *= Matrix3x2.CreateTranslation(new Vector2(gfx.Width /2, gfx.Height /2)) // 
                         * Matrix3x2.CreateTranslation(new Vector2(2, -8)); // Brute forced to perfectly line up with the in game map;
                 }
                 else
@@ -1641,6 +1737,51 @@ namespace MapAssist.Helpers
             foreach (var item in cacheBitmaps.Values) item.Dispose();
             foreach (var item in cacheFonts.Values) item.Dispose();
             foreach (var item in cacheBrushes.Values) item.Dispose();
+        }
+
+        public Point ConvertMapPosToOsdPos(Point mapPos) //converts an map pos to osd pos (based on player pos)
+        {
+            var myMapPos = _gameData.PlayerUnit.Position.ToVector();
+            var myOsdPos = Vector2.Transform(_gameData.PlayerUnit.Position.ToVector(), areaTransformMatrix);
+            var mapOsdPos = Vector2.Transform(mapPos.ToVector(), areaTransformMatrix);
+
+            var mapOsdPosFromMyPos = Vector2.Subtract(mapOsdPos, myOsdPos);
+            //var leaderMapDist = Vector2.Distance(Leader.Position.ToVector(), myMapPos);
+
+            var rect = WindowRect();
+            var rectMiddleX = rect.Width / 2;
+            var rectMiddleY = rect.Height / 2;
+
+            var resizeX = 8;
+            var resizeY = 8;
+            //var padding = 25;
+            var paddingX = 1;
+            var paddingY = 0;
+            //if (leaderPosFromMyPos.X >= 0) { paddingX = padding; } else { paddingX = padding * -1; }
+            //if (leaderPosFromMyPos.X >= 0) { paddingY = padding; } else { paddingY = padding * -1; }
+
+            var X = (int)Math.Min(Math.Max(rect.Left + rectMiddleX + (mapOsdPosFromMyPos.X * resizeX + paddingX), rect.Left), rect.Right);
+            var Y = (int)Math.Min(Math.Max(rect.Top + rectMiddleY + (mapOsdPosFromMyPos.Y * resizeY + paddingY), rect.Top), rect.Bottom*0.85);
+
+            //var X = (int)Math.Min(Math.Max(rect.Left + (monsterPosFromMyPos.X * resizeX), monsterPosFromMyPos.X * resizeX), rect.Right);
+            //var Y = (int)Math.Min(Math.Max(rect.Top + (monsterPosFromMyPos.Y * resizeY), monsterPosFromMyPos.Y * resizeY), rect.Bottom);
+            //_log.Info(rect);
+            //_log.Info("Leader Click Pos: " + X + "," + Y);
+            //_log.Info("Leader Distance/Pos:  " + leaderMapDist + " " + leaderPosFromMyPos.X + "," + leaderPosFromMyPos.Y);
+
+            //InputSender.RightClick((int)X, (int)Y, 400);
+
+            //InputSender.SetCursorPosition(X, Y);
+
+            return new Point(X, Y);
+        }
+
+        private Rectangle WindowRect() //Returns rectangle of D2R window
+        {
+            WindowBounds rect;
+            WindowHelper.GetWindowClientBounds(_gameData.MainWindowHandle, out rect);
+
+            return new Rectangle(rect.Left, rect.Top, rect.Right, rect.Bottom);
         }
     }
 }

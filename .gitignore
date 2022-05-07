@@ -7,6 +7,7 @@
 # or wget:
 # wget --no-check-certificate http://gist.githubusercontent.com/kmorcinek/2710267/raw/.gitignore
 
+
 # User-specific files
 *.suo
 *.user
@@ -223,3 +224,7 @@ project.lock.json
 #####
 # End of core ignore list, below put you custom 'per project' settings (patterns or path)
 #####
+/Game_103.ico
+
+# config files
+*.yaml
