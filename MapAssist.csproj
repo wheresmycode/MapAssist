@@ -158,6 +158,7 @@
     <Compile Include="Structs\ActMisc.cs" />
     <Compile Include="Structs\Inventory.cs" />
     <Compile Include="Structs\Items.cs" />
+    <Compile Include="Structs\MapSeed.cs" />
     <Compile Include="Structs\Menus.cs" />
     <Compile Include="Structs\Level.cs" />
     <Compile Include="Structs\MonsterData.cs" />
@@ -176,6 +177,7 @@
     <Compile Include="Types\ItemsExport.cs" />
     <Compile Include="Types\Locale.cs" />
     <Compile Include="Types\Items.cs" />
+    <Compile Include="Types\MapSeed.cs" />
     <Compile Include="Types\Missile.cs" />
     <Compile Include="Types\Roster.cs" />
     <Compile Include="Types\Session.cs" />

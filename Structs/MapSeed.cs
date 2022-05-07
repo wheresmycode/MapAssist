@@ -19,7 +19,7 @@
 
 using System;
 using System.Runtime.InteropServices;
-    
+
 namespace MapAssist.Structs
 {
     [StructLayout(LayoutKind.Explicit)]

@@ -187,7 +187,7 @@ namespace MapAssist
                 
                 var resizeX = 10;
                 var resizeY = 10;
-                var padding = 25;
+                
                 var paddingX = 0;
                 var paddingY = 0;
                 //if (leaderPosFromMyPos.X >= 0) { paddingX = padding; } else { paddingX = padding * -1; }
