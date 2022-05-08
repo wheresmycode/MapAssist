@@ -87,9 +87,9 @@ namespace MapAssist
 
         private void MoveToLeader(Point WindowPos)
         {
-            if (_compositor.Leader != null & lastLeaderPos != WindowPos)
+            if (_compositor.Leader != null & lastLeaderPos != WindowPos & LeaderDistance() > MapAssistConfiguration.Loaded.FollowConfiguration.FollowRange)
             {
-                lastLeaderPos = _compositor.Leader.Position;
+                //lastLeaderPos = _compositor.Leader.Position;
                 WindowPos = Vector2.Transform(WindowPos.ToVector(), _compositor.areaTransformMatrix).ToPoint();
                 
                 if (LeaderDistance() > 1 && LeaderDistance() < 50)
@@ -111,7 +111,9 @@ namespace MapAssist
                     InputSender.ClickKey("E",500);
                     
                 }
+
             }
+            lastLeaderPos = _compositor.Leader.Position;
         }
         
 
@@ -428,11 +430,9 @@ namespace MapAssist
                         {
                             DrinkPots();
                             //_log.Info("Leader is NOT null");
-                            if (LeaderDistance() > MapAssistConfiguration.Loaded.FollowConfiguration.FollowRange)
-                            {
-                                MoveToLeader(_compositor.Leader.Position);
-                            };
-                            if (LeaderDistance() < MapAssistConfiguration.Loaded.FollowConfiguration.FollowRange)
+                            MoveToLeader(_compositor.Leader.Position);
+
+                            if (LeaderDistance() <= MapAssistConfiguration.Loaded.FollowConfiguration.FollowRange)
                             {
                                 AttackMonster(_compositor.MonsterList);
                                 //_log.Info("Monsterlist: "+ _compositor.MonsterList.Count);

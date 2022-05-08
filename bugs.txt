@@ -1,3 +1,6 @@
 bugs:
 key conversion in clickKey doesnt work corretly (uppercase -> lowercase -> wrong?)
 barb merc gets recognized as monster?
+attacking invisible/non-attackable monsters
+attacking seems to do nothing sometimes
+cursor positions are on window border while attacking if monster is out of sight on y-axis
