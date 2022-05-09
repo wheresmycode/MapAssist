@@ -22,15 +22,12 @@ using GameOverlay.Windows;
 using MapAssist.Helpers;
 using MapAssist.Settings;
 using MapAssist.Types;
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Windows.Forms;
-using System.Numerics;
-using System.Windows;
 using SendInputs;
-
-
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using System.Windows.Forms;
 //using WK.Libraries.HotkeyListenerNS;
 using Graphics = GameOverlay.Drawing.Graphics;
 
@@ -123,16 +120,15 @@ namespace MapAssist
             var attackList = new List<(Point,int)>();
             var myMapPos = _gameData.PlayerUnit.Position.ToVector();
             var myOsdPos = Vector2.Transform(_gameData.PlayerUnit.Position.ToVector(), _compositor.areaTransformMatrix);
-
+            var monstersToIgnore = new List<string> { "BaalTaunt", "Act5Combatant", "CatapultSpotterE" };
 
             foreach (UnitMonster monster in monsterList)
             {
-                if (monster.DistanceTo(_gameData.PlayerUnit) < attackRange)
+                if (monster.DistanceTo(_gameData.PlayerUnit) <= attackRange & monster.IsMonster & !monster.IsPlayerOwned)
                 {
                     //_log.Info("Monster Distance: " + monster.DistanceTo(_gameData.PlayerUnit));
-
-                    //var attackPos = Vector2.Transform(monster.Position.ToVector(), _compositor.areaTransformMatrix).ToPoint();
-                    
+                    if (monstersToIgnore.Contains(monster.Npc.Name())) continue;
+                    //_log.Info($"Monster: {monster.Npc.Name()}, Merc: {monster.IsMerc}, PlayerOwned: {monster.IsPlayerOwned}, UnitType: {monster.UnitType}, MonsterType: {monster.MonsterType}");
                     attackList.Add((monster.Position, (int)monster.DistanceTo(_gameData.PlayerUnit)));
                 }
             }
@@ -159,7 +155,7 @@ namespace MapAssist
                 //if (leaderPosFromMyPos.X >= 0) { paddingX = padding; } else { paddingX = padding * -1; }
                 //if (leaderPosFromMyPos.X >= 0) { paddingY = padding; } else { paddingY = padding * -1; }
 
-                var X = (int)Math.Min(Math.Max(rect.Left + rectMiddleX + (monsterPosFromMyPos.X * resizeX + paddingX), rect.Left), rect.Right);
+                var X = (int)Math.Min(Math.Max(rect.Left + rectMiddleX + (monsterPosFromMyPos.X * resizeX + paddingX), rect.Left), rect.Right - 2);
                 var Y = (int)Math.Min(Math.Max(rect.Top + rectMiddleY + (monsterPosFromMyPos.Y * resizeY + paddingY), rect.Top), rect.Bottom*0.85);
                 
                 //var X = (int)Math.Min(Math.Max(rect.Left + (monsterPosFromMyPos.X * resizeX), monsterPosFromMyPos.X * resizeX), rect.Right);
@@ -252,7 +248,7 @@ namespace MapAssist
             {
                 if(potTimerHealth > 0) potTimerHealth--;
                 if(potTimerMana > 0) potTimerMana--;
-                _log.Info($"Health/Drink {health}/{drinkHP} potTimerHealth@{potTimerHealth}");
+                //_log.Info($"Health/Drink {health}/{drinkHP} potTimerHealth@{potTimerHealth}");
                 //_log.Info($"Mana/Drink {mana}/{drinkMP} potTimerMana@{potTimerMana}");
                 return; 
             }
@@ -334,10 +330,9 @@ namespace MapAssist
                 else
                 {
                     _log.Info($"Missing Healthpots");
-                    potTimerMana--;
+                    potTimerHealth--;
                 }
-            }
-            else potTimerMana--;
+            }else potTimerHealth--;
 
 
             if (drankHealth == true)
