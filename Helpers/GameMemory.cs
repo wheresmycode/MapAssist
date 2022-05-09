@@ -1,22 +1,3 @@
-/**
- *   Copyright (C) 2021 okaygo
- *
- *   https://github.com/misterokaygo/MapAssist/
- *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
- **/
-
 using MapAssist.Settings;
 using MapAssist.Types;
 using System;
@@ -200,6 +181,8 @@ namespace MapAssist.Helpers
                     throw new Exception("Game difficulty out of bounds.");
                 }
 
+                var areaLevel = levelId.Level(gameDifficulty);
+
                 // Players
                 var playerList = rawPlayerUnits.Where(x => x.UnitType == UnitType.Player && x.IsPlayer)
                     .Select(x => x.UpdateRosterEntry(rosterData)).ToArray()
@@ -278,6 +261,8 @@ namespace MapAssist.Helpers
                         cache[item.HashString] = item;
                     }
 
+                    item.IsPlayerOwned = _playerCubeOwnerID[_currentProcessId] != uint.MaxValue && item.ItemData.dwOwnerID == _playerCubeOwnerID[_currentProcessId];
+
                     if (Items.ItemUnitIdsToSkip[_currentProcessId].Contains(item.UnitId)) continue;
 
                     if (_playerMapChanged[_currentProcessId] && item.IsAnyPlayerHolding && item.Item != Item.HoradricCube && !Items.ItemUnitIdsToSkip[_currentProcessId].Contains(item.UnitId))
@@ -305,12 +290,12 @@ namespace MapAssist.Helpers
 
                     var checkDroppedItem = Items.CheckDroppedItem(item, _currentProcessId);
                     var checkVendorItem = Items.CheckVendorItem(item, _currentProcessId);
-                    if (item.IsValidItem && (checkDroppedItem || checkVendorItem || checkInventoryItem))
+                    if (item.IsValidItem && !item.IsInSocket && (checkDroppedItem || checkVendorItem || checkInventoryItem))
                     {
-                        Items.LogItem(item, _currentProcessId);
+                        Items.LogItem(item, levelId, areaLevel, PlayerUnit.Level, _currentProcessId);
                     }
 
-                    if (item.Item == Item.HoradricCube)
+                    if (item.Item == Item.HoradricCube && !item.IsDropped)
                     {
                         Items.ItemUnitIdsToSkip[_currentProcessId].Add(item.UnitId);
                     }
@@ -334,7 +319,7 @@ namespace MapAssist.Helpers
                 }).Where(x => x != null).ToArray();
 
                 // Set Cube Owner
-                if (_playerMapChanged[_currentProcessId])
+                if (_playerMapChanged[_currentProcessId] || _playerCubeOwnerID[_currentProcessId] == uint.MaxValue)
                 {
                     var cube = allItems.FirstOrDefault(x => x.Item == Item.HoradricCube);
                     if (cube != null)
@@ -344,8 +329,8 @@ namespace MapAssist.Helpers
                 }
 
                 // Belt items
-                var belt = allItems.FirstOrDefault(x => x.ItemModeMapped == ItemModeMapped.Player && x.ItemData.BodyLoc == BodyLoc.BELT);
-                var beltItems = allItems.Where(x => x.ItemModeMapped == ItemModeMapped.Belt).ToArray();
+                var belt = allItems.FirstOrDefault(x => x.IsPlayerOwned && x.ItemModeMapped == ItemModeMapped.Player && x.ItemData.BodyLoc == BodyLoc.BELT);
+                var beltItems = allItems.Where(x => _playerCubeOwnerID[_currentProcessId] != uint.MaxValue && x.ItemModeMapped == ItemModeMapped.Belt).ToArray();
 
                 var beltSize = belt == null ? 1 :
                     new Item[] { Item.Sash, Item.LightBelt }.Contains(belt.Item) ? 2 :

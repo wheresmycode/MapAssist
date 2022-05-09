@@ -1,23 +1,4 @@
-﻿/**
- *   Copyright (C) 2021 okaygo
- *
- *   https://github.com/misterokaygo/MapAssist/
- *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
- **/
-
-using MapAssist.Files;
+﻿using MapAssist.Files;
 using MapAssist.Helpers;
 using MapAssist.Settings;
 using MapAssist.Types;
@@ -37,6 +18,7 @@ namespace MapAssist.Settings
             Loaded = ConfigurationParser<MapAssistConfiguration>.ParseConfigurationMain(Properties.Resources.Config, $"./Config.yaml");
             Localization.LoadLocalizationFile();
             PointOfInterestHandler.UpdateLocalizationNames();
+            QualityLevels.LoadQualityLevelsFile();
         }
 
         public void Save()
@@ -163,6 +145,9 @@ namespace MapAssist.Settings
 
         [YamlMember(Alias = "ArmorWeapRack", ApplyNamingConventions = false)]
         public PointOfInterestRendering ArmorWeapRack { get; set; }
+
+        [YamlMember(Alias = "Door", ApplyNamingConventions = false)]
+        public PointOfInterestRendering Door { get; set; }
 
         [YamlMember(Alias = "Item", ApplyNamingConventions = false)]
         public PointOfInterestRendering Item { get; set; }
@@ -352,6 +337,12 @@ public class ItemLogConfiguration
 
     [YamlMember(Alias = "PlaySoundOnDrop", ApplyNamingConventions = false)]
     public bool PlaySoundOnDrop { get; set; }
+
+    [YamlMember(Alias = "ShowDistanceToItem", ApplyNamingConventions = false)]
+    public bool ShowDistanceToItem { get; set; }
+
+    [YamlMember(Alias = "ShowDirectionToItem", ApplyNamingConventions = false)]
+    public bool ShowDirectionToItem { get; set; }
 
     [YamlMember(Alias = "SoundFile", ApplyNamingConventions = false)]
     public string SoundFile { get; set; }

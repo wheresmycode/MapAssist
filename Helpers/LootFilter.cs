@@ -1,23 +1,4 @@
-﻿/**
- *   Copyright (C) 2021 okaygo
- *
- *   https://github.com/misterokaygo/MapAssist/
- *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
- **/
-
-using MapAssist.Settings;
+﻿using MapAssist.Settings;
 using MapAssist.Types;
 using System;
 using System.Collections.Generic;
@@ -27,7 +8,7 @@ namespace MapAssist.Helpers
 {
     public static class LootFilter
     {
-        public static (bool, ItemFilter) Filter(UnitItem item)
+        public static (bool, ItemFilter) Filter(UnitItem item, int areaLevel, int playerLevel)
         {
             // Skip low quality items
             var lowQuality = (item.ItemData.ItemFlags & ItemFlags.IFLAG_LOWQUALITY) == ItemFlags.IFLAG_LOWQUALITY;
@@ -54,12 +35,18 @@ namespace MapAssist.Helpers
                 // Requirement check functions
                 var requirementsFunctions = new Dictionary<string, Func<bool>>()
                 {
-                    ["Qualities"] = () => rule.Qualities.Contains(item.ItemData.ItemQuality),
-                    ["Sockets"] = () => rule.Sockets.Contains(Items.GetItemStat(item, Stats.Stat.NumSockets)),
-                    ["Ethereal"] = () => ((item.ItemData.ItemFlags & ItemFlags.IFLAG_ETHEREAL) == ItemFlags.IFLAG_ETHEREAL) == rule.Ethereal,
-                    ["AllAttributes"] = () => Items.GetItemStatAllAttributes(item) >= rule.AllAttributes,
-                    ["AllResist"] = () => Items.GetItemStatResists(item, false) >= rule.AllResist,
-                    ["SumResist"] = () => Items.GetItemStatResists(item, true) >= rule.SumResist,
+                    ["Qualities"]       = () => rule.Qualities.Contains(item.ItemData.ItemQuality),
+                    ["Sockets"]         = () => rule.Sockets.Contains(Items.GetItemStat(item, Stats.Stat.NumSockets)),
+                    ["Ethereal"]        = () => ((item.ItemData.ItemFlags & ItemFlags.IFLAG_ETHEREAL) == ItemFlags.IFLAG_ETHEREAL) == rule.Ethereal,
+                    ["MinAreaLevel"]    = () => areaLevel >= rule.MinAreaLevel,
+                    ["MaxAreaLevel"]    = () => areaLevel <= rule.MaxAreaLevel,
+                    ["MinPlayerLevel"]  = () => playerLevel >= rule.MinPlayerLevel,
+                    ["MaxPlayerLevel"]  = () => playerLevel <= rule.MaxPlayerLevel,
+                    ["MinQualityLevel"] = () => Items.GetQualityLevel(item) >= rule.MinQualityLevel,
+                    ["MaxQualityLevel"] = () => Items.GetQualityLevel(item) <= rule.MaxQualityLevel,
+                    ["AllAttributes"]   = () => Items.GetItemStatAllAttributes(item) >= rule.AllAttributes,
+                    ["AllResist"]       = () => Items.GetItemStatResists(item, false) >= rule.AllResist,
+                    ["SumResist"]       = () => Items.GetItemStatResists(item, true) >= rule.SumResist,
                     ["ClassSkills"] = () =>
                     {
                         if (rule.ClassSkills.Count() == 0) return true;

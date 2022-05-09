@@ -117,6 +117,8 @@ namespace MapAssist
             chkItemLogEnabled.Checked = MapAssistConfiguration.Loaded.ItemLog.Enabled;
             chkItemLogItemsOnIdentify.Checked = MapAssistConfiguration.Loaded.ItemLog.CheckItemOnIdentify;
             chkItemLogVendorItems.Checked = MapAssistConfiguration.Loaded.ItemLog.CheckVendorItems;
+            chkShowDistanceToItem.Checked = MapAssistConfiguration.Loaded.ItemLog.ShowDistanceToItem;
+            chkShowDirectionToItem.Checked = MapAssistConfiguration.Loaded.ItemLog.ShowDirectionToItem;
             chkPlaySound.Checked = MapAssistConfiguration.Loaded.ItemLog.PlaySoundOnDrop;
             txtFilterFile.Text = MapAssistConfiguration.Loaded.ItemLog.FilterFileName;
             txtSoundFile.Text = MapAssistConfiguration.Loaded.ItemLog.SoundFile;
@@ -664,6 +666,16 @@ namespace MapAssist
         private void chkItemLogItemsOnIdentify_CheckedChanged(object sender, EventArgs e)
         {
             MapAssistConfiguration.Loaded.ItemLog.CheckItemOnIdentify = chkItemLogItemsOnIdentify.Checked;
+        }
+
+        private void chkShowDistanceToItem_CheckedChanged(object sender, EventArgs e)
+        {
+            MapAssistConfiguration.Loaded.ItemLog.ShowDistanceToItem = chkShowDistanceToItem.Checked;
+        }
+
+        private void chkShowDirectionToItem_CheckedChanged(object sender, EventArgs e)
+        {
+            MapAssistConfiguration.Loaded.ItemLog.ShowDirectionToItem = chkShowDirectionToItem.Checked;
         }
 
         private void chkItemLogVendorItems_CheckedChanged(object sender, EventArgs e)
