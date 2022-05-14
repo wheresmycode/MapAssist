@@ -21,6 +21,7 @@ using MapAssist.Files;
 using MapAssist.Helpers;
 using MapAssist.Settings;
 using MapAssist.Types;
+using System.Collections.Generic;
 using System.Drawing;
 using YamlDotNet.Serialization;
 
@@ -35,8 +36,7 @@ namespace MapAssist.Settings
         [YamlMember(Alias = "FollowRange", ApplyNamingConventions = false)]
         public int FollowRange { get; set; }
 
-        [YamlMember(Alias = "AttackRange", ApplyNamingConventions = false)]
-        public int AttackRange { get; set; }
+
 
         [YamlMember(Alias = "InputDelay", ApplyNamingConventions = false)]
         public int InputDelay { get; set; }
@@ -52,6 +52,15 @@ namespace MapAssist.Settings
 
         [YamlMember(Alias = "ManaRejuv", ApplyNamingConventions = false)]
         public int ManaRejuv { get; set; }
+
+        [YamlMember(Alias = "AttackRange", ApplyNamingConventions = false)]
+        public int AttackRange { get; set; }
+
+        [YamlMember(Alias = "IgnoreMonsters", ApplyNamingConventions = false)]
+        public List<string> IgnoreMonsters { get; set; }
+
+        [YamlMember(Alias = "IgnoreImmunities", ApplyNamingConventions = false)]
+        public List<Resist> IgnoreImmunities { get; set; } = new List<Resist> { };
 
         [YamlMember(Alias = "CastOnLeader", ApplyNamingConventions = false)]
         public bool CastOnLeader { get; set; }

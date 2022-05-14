@@ -84,7 +84,8 @@ namespace MapAssist
 
         private void MoveToLeader(Point WindowPos)
         {
-            if (_compositor.Leader != null & lastLeaderPos != WindowPos & LeaderDistance() > MapAssistConfiguration.Loaded.FollowConfiguration.FollowRange)
+            
+            if (_compositor.Leader != null && lastLeaderPos != WindowPos && LeaderDistance() > MapAssistConfiguration.Loaded.FollowConfiguration.FollowRange)
             {
                 //lastLeaderPos = _compositor.Leader.Position;
                 WindowPos = Vector2.Transform(WindowPos.ToVector(), _compositor.areaTransformMatrix).ToPoint();
@@ -105,7 +106,7 @@ namespace MapAssist
                     //InputSender.LeftClick(X,Y, inputDelay);
 
                     InputSender.SetCursorPosition(X,Y);
-                    InputSender.ClickKey("E",500);
+                    InputSender.ClickKey("E",100);
                     
                 }
 
@@ -116,20 +117,40 @@ namespace MapAssist
 
         private void AttackMonster(List<UnitMonster> monsterList)
         {
+            if (_gameData.PlayerUnit.Area.IsTown()) return;
             var attackRange = MapAssistConfiguration.Loaded.FollowConfiguration.AttackRange;
             var attackList = new List<(Point,int)>();
             var myMapPos = _gameData.PlayerUnit.Position.ToVector();
             var myOsdPos = Vector2.Transform(_gameData.PlayerUnit.Position.ToVector(), _compositor.areaTransformMatrix);
-            var monstersToIgnore = new List<string> { "BaalTaunt", "Act5Combatant", "CatapultSpotterE" };
+            var monstersToIgnore = MapAssistConfiguration.Loaded.FollowConfiguration.IgnoreMonsters; // new List<string> { "BaalTaunt", "Act5Combatant", "CatapultSpotterE", "CatapultSpotterSiege" };
+            var ignoreImmunes = MapAssistConfiguration.Loaded.FollowConfiguration.IgnoreImmunities;
+            var ignore = false;
 
             foreach (UnitMonster monster in monsterList)
             {
-                if (monster.DistanceTo(_gameData.PlayerUnit) <= attackRange & monster.IsMonster & !monster.IsPlayerOwned)
+                if (attackList.Count > 6) continue;
+                ignore = false;
+                if (monster.DistanceTo(_gameData.PlayerUnit) <= attackRange && monster.IsMonster && !monster.IsPlayerOwned)
                 {
                     //_log.Info("Monster Distance: " + monster.DistanceTo(_gameData.PlayerUnit));
                     if (monstersToIgnore.Contains(monster.Npc.Name())) continue;
+                    if (monster.Immunities.Count > 0 && ignoreImmunes.Count > 0)
+                    {
+                        foreach (var immunity in ignoreImmunes) 
+                        {
+                            if (monster.Immunities.Contains(immunity))
+                            {
+                                //_log.Info($"Monster: {monster.Npc.Name()} has immunity {immunity} and is ignored");
+                                ignore = true;
+                                continue;
+                            }
+                            //_log.Info($"Monster: {monster.Npc.Name()} has immunity {monster.Immunities.First()}");
+                        }
+                    }
+                    if (ignore == true) continue;
                     //_log.Info($"Monster: {monster.Npc.Name()}, Merc: {monster.IsMerc}, PlayerOwned: {monster.IsPlayerOwned}, UnitType: {monster.UnitType}, MonsterType: {monster.MonsterType}");
                     attackList.Add((monster.Position, (int)monster.DistanceTo(_gameData.PlayerUnit)));
+                    //_log.Info($"Added Monster: {monster.Npc.Name()} to attacklist");
                 }
             }
             if (attackList.Count>0)
@@ -244,7 +265,7 @@ namespace MapAssist
             var drankMana = false;
             var drankHealth = false;
 
-            if (health > drinkHP & mana > drinkMP) 
+            if (health > drinkHP && mana > drinkMP) 
             {
                 if(potTimerHealth > 0) potTimerHealth--;
                 if(potTimerMana > 0) potTimerMana--;
@@ -254,7 +275,7 @@ namespace MapAssist
             }
 
 
-            if ((health <= drinkHPRJ | mana <= drinkMPRJ) & (potTimerHealth <= 100 | potTimerMana <= 100))
+            if ((health <= drinkHPRJ | mana <= drinkMPRJ) && (potTimerHealth <= 100 | potTimerMana <= 100))
             {
                 var rejuv = 2;
                 var potKeyInt = 0;
@@ -282,7 +303,7 @@ namespace MapAssist
                 
             }
 
-            if (mana <= drinkMP & potTimerMana <= 10)
+            if (mana <= drinkMP && potTimerMana <= 10)
             {
                 var manaPot = 1;
                 var potKeyInt = 0;
@@ -308,7 +329,7 @@ namespace MapAssist
                 }
             }else potTimerMana--;
 
-            if (health <= drinkHP & potTimerHealth <= 10)
+            if (health <= drinkHP && potTimerHealth <= 10)
             {
                 var healthPot = 0;
                 var potKeyInt = 0;

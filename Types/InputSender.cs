@@ -179,7 +179,7 @@ namespace SendInputs
                 },
                 };
                 SendKeyboardInput(input1);
-                Thread.Sleep(_rnd.Next(25 + time, 150 + time));
+                Thread.Sleep(_rnd.Next(1 + time, 250 + time));
                 var input2 = new KeyboardInput[]
                 {
                 new KeyboardInput
