@@ -1233,6 +1233,7 @@ namespace MapAssist.Helpers
             // Belt items
             if (MapAssistConfiguration.Loaded.RenderingConfiguration.ShowPotionBelt)
             {
+                potsInBelt = new int[] { 3,3,3,3 };
                 var font = CreateFont(gfx, fontFamily, gfx.ScaleFontSize(20));
                 var colors = new Color[]
                 {
@@ -1250,10 +1251,15 @@ namespace MapAssist.Helpers
                     var itemTypes = items.Select(x => x.Item.IsHealthPotion() ? 0 : x.Item.IsManaPotion() ? 1 : x.Item.IsRejuvPotion() ? 2 : 3).ToArray();
                     var color = itemTypes.Distinct().Count() == 1 && itemTypes[0] < colors.Length ? colors[itemTypes[0]] : Color.White;
                     var showAsterisk = items.Count(x => x.Item == items[0].Item) < items.Length;
-                    if (itemTypes != null && itemTypes.Length > 0)
-                    {   
+                    if (itemTypes.Length > 0)
+                    {
                         potsInBelt[i] = itemTypes[0];
-                    }else potsInBelt[i] = 3;
+                    }
+                    else //currently not possible
+                    {
+                        potsInBelt[i] = 3;
+                        Console.WriteLine($"Column {i} has no pots");
+                    }
 
 
                     var position = new Point(

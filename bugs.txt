@@ -1,11 +1,12 @@
 bugs:
 key conversion in clickKey doesnt work corretly (uppercase -> lowercase -> wrong?
-tries to drink healthpots from belt column 4 if empty
+
 
 fixed bugs:
 cooldown timer for health pots was not decrementing
 cursor positions are on window border while attacking if monster is out of sight on x-axis
 wrongly attacking: barb merc, amazon decoy, necro revives, invisible/non-attackable monsters
+potsInBelt was not updating if empty anymore because of merged changes
 
 stuff to add:
 use teleport to move

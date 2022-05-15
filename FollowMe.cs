@@ -113,6 +113,9 @@ namespace MapAssist
             }
             lastLeaderPos = _compositor.Leader.Position;
         }
+
+        private void CacheLeaderPos() 
+        { lastLeaderPos = _compositor.Leader.Position; }
         
 
         private void AttackMonster(List<UnitMonster> monsterList)
@@ -124,11 +127,12 @@ namespace MapAssist
             var myOsdPos = Vector2.Transform(_gameData.PlayerUnit.Position.ToVector(), _compositor.areaTransformMatrix);
             var monstersToIgnore = MapAssistConfiguration.Loaded.FollowConfiguration.IgnoreMonsters; // new List<string> { "BaalTaunt", "Act5Combatant", "CatapultSpotterE", "CatapultSpotterSiege" };
             var ignoreImmunes = MapAssistConfiguration.Loaded.FollowConfiguration.IgnoreImmunities;
+            var attackKey1 = MapAssistConfiguration.Loaded.FollowConfiguration.FastcastSkill1;
             var ignore = false;
 
             foreach (UnitMonster monster in monsterList)
             {
-                if (attackList.Count > 6) continue;
+                if (attackList.Count > 6) continue; //dont populate attacklist with more than x monsters
                 ignore = false;
                 if (monster.DistanceTo(_gameData.PlayerUnit) <= attackRange && monster.IsMonster && !monster.IsPlayerOwned)
                 {
@@ -178,13 +182,17 @@ namespace MapAssist
 
                 var X = (int)Math.Min(Math.Max(rect.Left + rectMiddleX + (monsterPosFromMyPos.X * resizeX + paddingX), rect.Left), rect.Right - 2);
                 var Y = (int)Math.Min(Math.Max(rect.Top + rectMiddleY + (monsterPosFromMyPos.Y * resizeY + paddingY), rect.Top), rect.Bottom*0.85);
-                
+
                 //var X = (int)Math.Min(Math.Max(rect.Left + (monsterPosFromMyPos.X * resizeX), monsterPosFromMyPos.X * resizeX), rect.Right);
                 //var Y = (int)Math.Min(Math.Max(rect.Top + (monsterPosFromMyPos.Y * resizeY), monsterPosFromMyPos.Y * resizeY), rect.Bottom);
                 //_log.Info("nextTarget2 Distance/Pos:  " + nextTarget2.Item2 + " " + X + "," + Y);
                 //_log.Info("Distance/Pos:  " + nextTarget2.Item2 + " " + monsterPosFromMyPos.X + "," + monsterPosFromMyPos.Y);
 
-                InputSender.RightClick((int)X, (int)Y, inputDelay);
+                // InputSender has too much options!!!
+
+                ClickOnOsdPos(new Point(X,Y), attackKey1);
+                //InputSender.ClickKey(attackKey1, 200);
+                //InputSender.RightClick((int)X, (int)Y, inputDelay);
                 //InputSender.SetCursorPosition(X, Y);
             }
         }
@@ -235,12 +243,14 @@ namespace MapAssist
             switch (input)
             {
                 case "right":
-                    InputSender.RightClick((int)pos.X, (int)pos.Y, 500);
+                    InputSender.RightClick((int)pos.X, (int)pos.Y, 300);
                     break;
                 case "left":
-                    InputSender.LeftClick((int)pos.X, (int)pos.Y, 500);
+                    InputSender.LeftClick((int)pos.X, (int)pos.Y, 300);
                     break;
                 case string i when (i.Length == 1):
+                    InputSender.SetCursorPosition((int)pos.X, (int)pos.Y);
+                    InputSender.ClickKey(input, 300);
                     Console.WriteLine($"Click Input was: {i}");
                     break;
             }
@@ -252,7 +262,7 @@ namespace MapAssist
 
         private void DrinkPots()
         {
-            if (_gameData.PlayerUnit.Area.IsTown() | _gameData.PlayerUnit.IsCorpse) return;
+            if (_gameData.PlayerUnit.Area.IsTown() | _gameData.PlayerUnit.IsCorpse) return; //dont drink if in town or dead
             var health = _gameData.PlayerUnit.LifePercentage;
             var mana = _gameData.PlayerUnit.ManaPercentage;
             var drinkHPRJ = MapAssistConfiguration.Loaded.FollowConfiguration.HealthRejuv;
@@ -275,7 +285,7 @@ namespace MapAssist
             }
 
 
-            if ((health <= drinkHPRJ | mana <= drinkMPRJ) && (potTimerHealth <= 100 | potTimerMana <= 100))
+            if ((health <= drinkHPRJ | mana <= drinkMPRJ) && (potTimerHealth <= 120 | potTimerMana <= 100))
             {
                 var rejuv = 2;
                 var potKeyInt = 0;
@@ -320,7 +330,7 @@ namespace MapAssist
                 {
                     InputSender.ClickKey(potKeyInt.ToString(), 200);
                     drankMana = true;
-                    _log.Info($"Clicked {potKeyInt} for Mana");
+                    //_log.Info($"Clicked {potKeyInt} for Mana");
                 }
                 else
                 {
@@ -346,7 +356,7 @@ namespace MapAssist
                 {
                     InputSender.ClickKey(potKeyInt.ToString(), 200);
                     drankHealth = true;
-                    _log.Info($"Clicked {potKeyInt} for Health");
+                    //_log.Info($"Clicked {potKeyInt} for Health");
                 }
                 else
                 {
@@ -444,22 +454,39 @@ namespace MapAssist
                         DrinkPots();
                         if (_compositor.Leader != null) //this only runs if the leader is in the roster
                         {
-                            DrinkPots();
                             //_log.Info("Leader is NOT null");
-                            MoveToLeader(_compositor.Leader.Position);
-
-                            if (LeaderDistance() <= MapAssistConfiguration.Loaded.FollowConfiguration.FollowRange)
-                            {
+                            //_log.Info($"Leader Position Changed:{lastLeaderPos} {_compositor.Leader.Position} {lastLeaderPos.DistanceTo(_compositor.Leader.Position)}");
+                            
+                            if (_compositor.MonsterList.Count > 0) 
+                            { 
+                                if (MapAssistConfiguration.Loaded.FollowConfiguration.Melee && !_gameData.PlayerUnit.Area.IsTown() && LeaderDistance() <= MapAssistConfiguration.Loaded.FollowConfiguration.AttackRange && lastLeaderPos == _compositor.Leader.Position)
+                                {    // allows follower to freeroam in attackrange if leader does not change position more than 10
+                                    AttackMonster(_compositor.MonsterList);
+                                    _log.Info("Look at me mom, im wildly attacking monsters!");
+                                }
+                                else if (LeaderDistance() <= MapAssistConfiguration.Loaded.FollowConfiguration.FollowRange)
+                                {
                                 AttackMonster(_compositor.MonsterList);
                                 //_log.Info("Monsterlist: "+ _compositor.MonsterList.Count);
+                                }
                             }
-                            
+
+                            if (MapAssistConfiguration.Loaded.FollowConfiguration.Melee && LeaderDistance() >= MapAssistConfiguration.Loaded.FollowConfiguration.AttackRange) 
+                            {
+                                MoveToLeader(_compositor.Leader.Position);
+                            }
+                            else
+                            {
+                                MoveToLeader(_compositor.Leader.Position);
+                            }
+                            //CacheLeaderPos();
                         }
                         else if (_compositor.leaderDistance > 1 && _compositor.leaderDistance < 50 && _compositor.leaderOsdPos.Y > 0) 
                         {
-                            ClickOnOsdPos(_compositor.leaderOsdPos, "left"); //try to click on leader if not in same map
+                            ClickOnOsdPos(_compositor.leaderOsdPos, "E"); //try to click on leader if not in same map
                             _log.Info($"Leader distance: {_compositor.leaderDistance} Clicked Leader");
                         }
+
                         //_log.Info("_compositor.leaderDistance" + _compositor.leaderDistance);
 
                         //var leaderClickPos = Vector2.Transform(_compositor.leaderWindowPos, _compositor.areaTransformMatrix);

@@ -56,11 +56,20 @@ namespace MapAssist.Settings
         [YamlMember(Alias = "AttackRange", ApplyNamingConventions = false)]
         public int AttackRange { get; set; }
 
+        [YamlMember(Alias = "Melee", ApplyNamingConventions = false)]
+        public bool Melee { get; set; }
+
         [YamlMember(Alias = "IgnoreMonsters", ApplyNamingConventions = false)]
         public List<string> IgnoreMonsters { get; set; }
 
         [YamlMember(Alias = "IgnoreImmunities", ApplyNamingConventions = false)]
         public List<Resist> IgnoreImmunities { get; set; } = new List<Resist> { };
+
+        [YamlMember(Alias = "FastcastSkill1", ApplyNamingConventions = false)]
+        public string FastcastSkill1 { get; set; }
+
+        [YamlMember(Alias = "FastcastSkill2", ApplyNamingConventions = false)]
+        public string FastcastSkill2 { get; set; }
 
         [YamlMember(Alias = "CastOnLeader", ApplyNamingConventions = false)]
         public bool CastOnLeader { get; set; }
